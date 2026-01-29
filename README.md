@@ -1,5 +1,15 @@
 # TurismoApp & Backend - Documentación General
 
+<p align="center">
+  <img src="https://nestjs.com/img/logo-small.svg" alt="NestJS" height="60"/>
+  <img src="https://avatars.githubusercontent.com/u/17219288?s=200&v=4" alt="Prisma" height="60"/>
+  <img src="https://www.postgresql.org/media/img/about/press/elephant.png" alt="PostgreSQL" height="60"/>
+  <img src="https://developer.android.com/static/studio/images/new-studio-logo-1_1920.png" alt="Android Studio" height="60"/>
+  <img src="https://upload.wikimedia.org/wikipedia/commons/7/74/Kotlin_Icon.png" alt="Kotlin" height="60"/>
+</p>
+
+---
+
 ## Descripción General
 Este repositorio contiene dos proyectos principales:
 
@@ -9,6 +19,8 @@ Este repositorio contiene dos proyectos principales:
 ---
 
 ## 1. Backend (carpeta `turismo-backend`)
+
+![Backend API](https://user-images.githubusercontent.com/674621/180624978-6b7e2e2e-2e2e-4e2a-8e2e-2e2e2e2e2e2e.png)
 
 ### Funcionalidad
 Permite a los usuarios:
@@ -73,6 +85,11 @@ JWT_SECRET=tu_clave_secreta
 ---
 
 ## 2. App Móvil (carpeta `TurismoApp`)
+
+<p align="center">
+  <img src="https://developer.android.com/static/studio/images/new-studio-logo-1_1920.png" alt="Android Studio" height="80"/>
+  <img src="https://upload.wikimedia.org/wikipedia/commons/7/74/Kotlin_Icon.png" alt="Kotlin" height="80"/>
+</p>
 
 ### Funcionalidad
 Aplicación Android para consumir la API del backend, permitiendo:
