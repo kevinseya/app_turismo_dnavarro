@@ -20,13 +20,13 @@ android {
            buildConfigField(
         "String",
         "API_URL",
-        "\"http://192.168.0.111:3000/\""
+        "\"http://192.168.100.29:3000/\""
     )
 
     buildConfigField(
         "String",
         "IMAGE_URL",
-        "\"http://192.168.0.111:3000/\""
+        "\"http://192.168.100.29:3000/\""
     )
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -78,6 +78,7 @@ dependencies {
 
     // Google Maps
     implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
     implementation("com.google.maps.android:maps-compose:4.3.3")
 
 
