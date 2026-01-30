@@ -9,8 +9,7 @@ import { Roles } from '../auth/roles.decorator';
 export class UsersController {
 	constructor(private readonly usersService: UsersService) {}
 
-	// Listar todos los usuarios (solo ADMIN)
-	@Roles('ADMIN')
+	// Listar todos los usuarios (cualquier usuario autenticado)
 	@Get()
 	findAll() {
 		return this.usersService.findAll();
