@@ -17,6 +17,18 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+           buildConfigField(
+        "String",
+        "API_URL",
+        "\"http://192.168.0.111:3000/\""
+    )
+
+    buildConfigField(
+        "String",
+        "IMAGE_URL",
+        "\"http://192.168.0.111:3000/\""
+    )
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -35,6 +47,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
