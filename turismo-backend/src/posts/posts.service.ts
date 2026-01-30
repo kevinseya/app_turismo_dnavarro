@@ -38,6 +38,22 @@ export class PostsService {
     });
   }
 
+  findByUser(userId: number) {
+    return this.prisma.post.findMany({
+      where: { userId, isActive: true },
+      include: {
+        comments: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+  }
+
   delete(id: number) {
     return this.prisma.post.update({
       where: { id },
