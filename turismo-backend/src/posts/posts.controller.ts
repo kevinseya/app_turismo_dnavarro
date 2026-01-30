@@ -93,4 +93,11 @@ export class PostsController {
   delete(@Param('id') id: string) {
     return this.postsService.delete(+id);
   }
+
+  // Obtener posts de un usuario específico
+  @Get('user/:userId')
+  findByUser(@Param('userId') userId: string) {
+    return this.postsService.findByUser(+userId);
+  }
+
 }
