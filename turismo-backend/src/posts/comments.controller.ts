@@ -14,7 +14,7 @@ export class CommentsController {
     @Body() dto: CreateCommentDto,
     @Req() req
   ) {
-    return this.commentsService.create(dto, req.user.sub, +postId);
+    return this.commentsService.create(dto, req.user.userId, +postId);
   }
 
   @Get()
