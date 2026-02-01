@@ -1,4 +1,5 @@
 package com.dnavarro.turismoapp.ui.home
+import androidx.compose.foundation.clickable
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -73,6 +74,8 @@ fun HomeScreen(homeViewModel: HomeViewModel, navController: NavController, token
     LaunchedEffect(token) {
         if (token.isNotEmpty()) {
             homeViewModel.getFeed(token)
+            // Limpiar el back stack para que no regrese al login
+            navController.popBackStack("login", inclusive = true)
         }
     }
     val posts by homeViewModel.posts.collectAsState()
@@ -139,7 +142,8 @@ fun PostItem(
                         contentDescription = "Imagen ${page + 1} de la publicación",
                         modifier = Modifier
                             .fillMaxSize()
-                            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
+                            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                            .clickable { navController.navigate("postDetail/${post.id}") },
                         contentScale = ContentScale.Crop
                     )
                 }
