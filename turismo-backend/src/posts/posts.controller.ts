@@ -86,12 +86,13 @@ export class PostsController {
     return this.postsService.findAll();
   }
 
-  // ❌ BORRADO LOGICO (ADMIN)
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  // ❌ BORRADO LOGICO (ADMIN o dueño del post)
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  delete(@Param('id') id: string) {
-    return this.postsService.delete(+id);
+  async delete(@Param('id') id: string, @Req() req: any) {
+    const user = req.user as any;
+    const userId = user?.userId || user?.sub;
+    return this.postsService.delete(+id, +userId);
   }
 
   // Obtener posts de un usuario específico

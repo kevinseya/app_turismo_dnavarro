@@ -54,7 +54,16 @@ export class PostsService {
     });
   }
 
-  delete(id: number) {
+  async delete(id: number, userId: number) {
+    // Obtener el post
+    const post = await this.prisma.post.findUnique({ where: { id } });
+    if (!post) throw new Error('Post not found');
+    // Permitir solo si es dueño o admin
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const isAdmin = user?.role === 'ADMIN';
+    if (post.userId !== userId && !isAdmin) {
+      throw new Error('No autorizado para borrar este post');
+    }
     return this.prisma.post.update({
       where: { id },
       data: { isActive: false },
