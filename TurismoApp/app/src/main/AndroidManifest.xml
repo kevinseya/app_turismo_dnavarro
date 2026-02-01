@@ -26,7 +26,7 @@
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyDEndDm9pdafx9XhQKMVMSFFU2HGrqmwM0" />
+            android:value="" />
 
         <provider
             android:name="com.dnavarro.turismoapp.ComposeFileProvider"
