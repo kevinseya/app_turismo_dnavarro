@@ -1,4 +1,6 @@
+
 package com.dnavarro.turismoapp.ui.profile
+import androidx.compose.foundation.clickable
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -22,6 +24,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -59,16 +63,22 @@ fun ShimmerProfilePosts() {
 
 @Composable
 fun ProfileScreen(navController: NavController, profileViewModel: ProfileViewModel, token: String, userId: String) {
-    LaunchedEffect(token) {
+    // Obtener el id del usuario actual desde el token (puedes ajustar esto según tu lógica de sesión)
+    val currentUserId = remember { com.dnavarro.turismoapp.data.SessionManager.getUserIdFromToken(token) ?: "" }
+    val isOwnProfile = userId == currentUserId
+
+    LaunchedEffect(token, userId) {
         if (token.isNotEmpty()) {
-            profileViewModel.getMyProfile(token, userId)
+            profileViewModel.getProfile(token, userId, currentUserId)
         }
     }
 
     val user by profileViewModel.user.collectAsState()
     val posts by profileViewModel.posts.collectAsState()
-    val isLoading = posts.isEmpty()
+    val isFollowing by profileViewModel.isFollowing.collectAsState()
+    val isLoading = posts.isEmpty() && user == null
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -76,8 +86,11 @@ fun ProfileScreen(navController: NavController, profileViewModel: ProfileViewMod
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        user?.let {
-            // Animación de foto de perfil
+        if (user == null && isLoading) {
+            CircularProgressIndicator()
+        } else if (user != null) {
+            val u = user!!
+            // Avatar
             var scale = animateFloatAsState(
                 targetValue = 1f,
                 animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing), label = "profilePicScale"
@@ -90,7 +103,7 @@ fun ProfileScreen(navController: NavController, profileViewModel: ProfileViewMod
                 contentAlignment = Alignment.Center
             ) {
                 AsyncImage(
-                    model = "https://ui-avatars.com/api/?name=" + it.name.replace(" ", "+"),
+                    model = "https://ui-avatars.com/api/?name=" + u.name.replace(" ", "+"),
                     contentDescription = "Foto de perfil",
                     modifier = Modifier
                         .size(100.dp)
@@ -100,10 +113,14 @@ fun ProfileScreen(navController: NavController, profileViewModel: ProfileViewMod
             }
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = it.name,
+                text = u.name,
                 style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground
             )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(text = u.email, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground)
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(text = "Rol: ${u.role}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onBackground)
             Spacer(modifier = Modifier.height(8.dp))
             // Estadísticas animadas
             Row(
@@ -114,20 +131,65 @@ fun ProfileScreen(navController: NavController, profileViewModel: ProfileViewMod
                 AnimatedStat("Likes", posts.sumOf { p -> p.likesCount })
                 AnimatedStat("Followers", 0)
             }
-        }
-        Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            text = "Mis Publicaciones",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        if (isLoading) {
-            ShimmerProfilePosts()
-        } else {
-            MyPostsGrid(posts = posts, onDeleteClick = { postId ->
-                profileViewModel.deletePost(token, postId.toString(), userId)
-            })
+            Spacer(modifier = Modifier.height(16.dp))
+            if (isOwnProfile) {
+                Button(
+                    onClick = {
+                        com.dnavarro.turismoapp.data.SessionManager.clearSession(context)
+                        navController.navigate("login") {
+                            popUpTo(0) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Cerrar sesión", color = Color.White)
+                }
+            } else {
+                if (isFollowing == true) {
+                    Button(
+                        onClick = { profileViewModel.unfollowUser(token, userId, currentUserId) },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                    ) {
+                        Text("Dejar de seguir", color = Color.White)
+                    }
+                } else {
+                    Button(
+                        onClick = { profileViewModel.followUser(token, userId, currentUserId) },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Text("Seguir", color = Color.White)
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = if (isOwnProfile) "Mis Publicaciones" else "Publicaciones",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            if (isOwnProfile || isFollowing == true) {
+                if (posts.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No hay publicaciones", color = MaterialTheme.colorScheme.onBackground)
+                    }
+                } else {
+                    MyPostsGrid(posts = posts, onDeleteClick = { postId ->
+                        profileViewModel.deletePost(token, postId.toString(), userId)
+                    }, navController = navController)
+                }
+            } else if (!isOwnProfile && isFollowing == false) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Debes seguir para poder ver el perfil de este usuario", color = MaterialTheme.colorScheme.error)
+                }
+            }
         }
     }
 }
@@ -145,7 +207,7 @@ fun AnimatedStat(label: String, value: Int) {
 }
 
 @Composable
-fun MyPostsGrid(posts: List<Post>, onDeleteClick: (Int) -> Unit) {
+fun MyPostsGrid(posts: List<Post>, onDeleteClick: (Int) -> Unit, navController: NavController) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = Modifier.fillMaxSize(),
@@ -153,13 +215,13 @@ fun MyPostsGrid(posts: List<Post>, onDeleteClick: (Int) -> Unit) {
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(posts) { post ->
-            MyPostItem(post = post, onDeleteClick = onDeleteClick)
+            MyPostItem(post = post, onDeleteClick = onDeleteClick, navController = navController)
         }
     }
 }
 
 @Composable
-fun MyPostItem(post: Post, onDeleteClick: (Int) -> Unit) {
+fun MyPostItem(post: Post, onDeleteClick: (Int) -> Unit, navController: NavController) {
     val coroutineScope = rememberCoroutineScope()
     var scale = animateFloatAsState(
         targetValue = 1f,
@@ -179,7 +241,8 @@ fun MyPostItem(post: Post, onDeleteClick: (Int) -> Unit) {
                 contentDescription = post.title,
                 modifier = Modifier
                     .fillMaxSize()
-                    .clip(RoundedCornerShape(16.dp)),
+                    .clip(RoundedCornerShape(16.dp))
+                    .clickable { navController.navigate("postDetail/${post.id}") },
                 contentScale = ContentScale.Crop
             )
             IconButton(
@@ -202,29 +265,4 @@ fun MyPostItem(post: Post, onDeleteClick: (Int) -> Unit) {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun ProfileScreenPreview() {
-    TurismoAppTheme {
-        val user = User(1, "Turista Explorador", "test@test.com", "CLIENT", true)
-        val posts = listOf(
-            Post(1, "Un paraíso escondido", "", 0.0, 0.0, "", 0, 0, 0f, 1, listOf("https://images.pexels.com/photos/346529/pexels-photo-346529.jpeg")),
-            Post(2, "Aventura en las montañas", "", 0.0, 0.0, "", 0, 0, 0f, 1, listOf("https://images.pexels.com/photos/417074/pexels-photo-417074.jpeg")),
-            Post(3, "Ciudad de neón", "", 0.0, 0.0, "", 0, 0, 0f, 1, listOf("https://images.pexels.com/photos/2129796/pexels-photo-2129796.jpeg")),
-            Post(4, "Ruta del desierto", "", 0.0, 0.0, "", 0, 0, 0f, 1, listOf("https://images.pexels.com/photos/255469/pexels-photo-255469.jpeg"))
-        )
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = user.name,
-                style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Mis Publicaciones",
-                style = MaterialTheme.typography.titleLarge
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            MyPostsGrid(posts = posts, onDeleteClick = {})
-        }
-    }
-}
+// Elimina el preview o usa un navController falso si es necesario para compilar
