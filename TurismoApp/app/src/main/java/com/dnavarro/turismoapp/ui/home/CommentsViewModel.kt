@@ -25,12 +25,13 @@ class CommentsViewModel : ViewModel() {
         }
     }
 
-    fun createComment(token: String, postId: String, content: String) {
+    fun createComment(token: String, postId: String, content: String, onCommentAdded: (() -> Unit)? = null) {
         viewModelScope.launch {
             try {
                 val request = CreateCommentRequest(content = content, rating = 5.0f) // Default rating
                 Api.retrofitService.createComment("Bearer $token", postId, request)
                 getComments(token, postId) // Refresh the list
+                onCommentAdded?.invoke()
             } catch (t: Throwable) {
                 Log.e("CommentsViewModel", "Failed to create comment", t)
             }
