@@ -23,6 +23,8 @@ private val retrofit = Retrofit.Builder()
 
 
 interface ApiService {
+        @GET("posts/user/{userId}")
+        suspend fun getPostsByUser(@Header("Authorization") token: String, @Path("userId") userId: String): List<Post>
     // Auth
     @POST("auth/register")
     suspend fun register(@Body user: Map<String, String>): RegisterResponse
