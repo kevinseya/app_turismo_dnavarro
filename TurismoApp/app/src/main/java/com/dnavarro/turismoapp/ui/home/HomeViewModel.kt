@@ -11,6 +11,27 @@ import kotlinx.coroutines.launch
 
 class HomeViewModel : ViewModel() {
 
+        fun searchUsers(token: String, query: String, onSuccess: (List<com.dnavarro.turismoapp.data.User>) -> Unit, onError: (String) -> Unit) {
+            viewModelScope.launch {
+                try {
+                    // Por ahora, filtra localmente tras obtener todos los usuarios
+                    val allUsers = com.dnavarro.turismoapp.network.Api.retrofitService.getUsers("Bearer $token")
+                    val filtered = if (query.isBlank()) allUsers else allUsers.filter {
+                        it.name.contains(query, ignoreCase = true) || (it.email?.contains(query, ignoreCase = true) ?: false)
+                    }
+                    onSuccess(filtered)
+                } catch (t: Throwable) {
+                    onError("Error al buscar usuarios: ${t.localizedMessage}")
+                }
+            }
+        }
+    fun incrementCommentsCount(postId: Int?) {
+        if (postId == null) return
+        _posts.value = _posts.value.map {
+            if (it.id == postId) it.copy(commentsCount = it.commentsCount + 1) else it
+        }
+    }
+
     private val _posts = MutableStateFlow<List<Post>>(emptyList())
     val posts: StateFlow<List<Post>> = _posts
 
