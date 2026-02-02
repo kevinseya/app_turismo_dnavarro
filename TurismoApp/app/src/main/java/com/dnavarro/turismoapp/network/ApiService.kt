@@ -1,6 +1,7 @@
 package com.dnavarro.turismoapp.network
 
 import com.dnavarro.turismoapp.data.* 
+import com.dnavarro.turismoapp.BuildConfig
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -8,17 +9,22 @@ import okhttp3.MultipartBody
 import retrofit2.Retrofit
 import retrofit2.http.*
 
-private const val BASE_URL = "http://10.0.2.2:3000/" // Replace with your actual backend URL
-const val BASE_IMAGE_URL = "http://10.0.2.2:3000/"
+private const val BASE_URL = BuildConfig.API_URL
+const val BASE_IMAGE_URL = BuildConfig.IMAGE_URL
 
 private val json = Json { ignoreUnknownKeys = true }
 
 private val retrofit = Retrofit.Builder()
-    .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
     .baseUrl(BASE_URL)
+    .addConverterFactory(
+        json.asConverterFactory("application/json".toMediaType())
+    )
     .build()
 
+
 interface ApiService {
+        @GET("posts/user/{userId}")
+        suspend fun getPostsByUser(@Header("Authorization") token: String, @Path("userId") userId: String): List<Post>
     // Auth
     @POST("auth/register")
     suspend fun register(@Body user: Map<String, String>): RegisterResponse

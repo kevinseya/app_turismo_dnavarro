@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, Body, UseGuards } from '@nestjs/common';
+	import { Controller, Get, Patch, Param, Body, UseGuards, Req } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -9,8 +9,23 @@ import { Roles } from '../auth/roles.decorator';
 export class UsersController {
 	constructor(private readonly usersService: UsersService) {}
 
-	// Listar todos los usuarios (solo ADMIN)
-	@Roles('ADMIN')
+	// Obtener perfil de usuario por id (cualquier usuario autenticado)
+	@Get(':id')
+	async findOne(@Param('id') id: string, @Req() req: any) {
+		const userId = +id;
+		const authUser = req.user as any;
+		const authUserId = authUser?.userId || authUser?.sub;
+		const user = await this.usersService.findOne(userId);
+		if (!user) return null;
+		// Si el usuario autenticado es diferente, incluir isFollowing
+		if (authUserId && userId !== +authUserId && this.usersService.isFollowing) {
+			const isFollowing = await this.usersService.isFollowing(+authUserId, userId);
+			return { ...user, isFollowing };
+		}
+		return user;
+	}
+
+	// Listar todos los usuarios (cualquier usuario autenticado)
 	@Get()
 	findAll() {
 		return this.usersService.findAll();

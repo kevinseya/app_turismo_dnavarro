@@ -9,11 +9,11 @@ export class LikeController {
 
   @Post(':postId')
   like(@Req() req, @Param('postId') postId: string) {
-    return this.service.like(req.user.sub, +postId);
+    return this.service.like(req.user.userId, +postId);
   }
 
   @Delete(':postId')
   unlike(@Req() req, @Param('postId') postId: string) {
-    return this.service.unlike(req.user.sub, +postId);
+    return this.service.unlike(req.user.userId, +postId);
   }
 }

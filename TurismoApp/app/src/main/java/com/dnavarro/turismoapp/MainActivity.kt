@@ -1,5 +1,6 @@
 package com.dnavarro.turismoapp
 
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -28,6 +29,7 @@ import com.dnavarro.turismoapp.ui.profile.NotificationsViewModel
 import com.dnavarro.turismoapp.ui.profile.ProfileScreen
 import com.dnavarro.turismoapp.ui.profile.ProfileViewModel
 import com.dnavarro.turismoapp.ui.theme.TurismoAppTheme
+import com.dnavarro.turismoapp.ui.post.PostDetailScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,6 +67,13 @@ class MainActivity : ComponentActivity() {
                             val token = backStackEntry.arguments?.getString("token") ?: ""
                             val userId = backStackEntry.arguments?.getString("userId") ?: ""
                             PostScreen(homeViewModel = homeViewModel, token = token, userId = userId, navController = navController)
+                        }
+                        composable(
+                            "searchUsers/{token}",
+                            arguments = listOf(navArgument("token") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            val token = backStackEntry.arguments?.getString("token") ?: ""
+                            SearchUserScreen(navController = navController, homeViewModel = homeViewModel, token = token)
                         }
                         composable(
                             "adminDashboard/{token}",

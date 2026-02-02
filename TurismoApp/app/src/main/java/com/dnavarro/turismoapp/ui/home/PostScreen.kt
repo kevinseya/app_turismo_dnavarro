@@ -4,6 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -48,6 +50,13 @@ fun PostScreen(modifier: Modifier = Modifier, homeViewModel: HomeViewModel, toke
                         Icon(
                             imageVector = Icons.Default.Notifications,
                             contentDescription = "Notificaciones",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                    IconButton(onClick = { navController.navigate("searchUsers/$token") }) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Buscar personas",
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
@@ -182,18 +191,29 @@ fun PostItem(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
-                IconButton(onClick = { onCommentClick(post) }) {
-                    Icon(
-                        imageVector = Icons.Default.Comment,
-                        contentDescription = "Comentarios",
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
+                Box(
+                    contentAlignment = Alignment.TopEnd
+                ) {
+                    IconButton(onClick = { onCommentClick(post) }) {
+                        Icon(
+                            imageVector = Icons.Default.Comment,
+                            contentDescription = "Comentarios",
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
+                    }
+                    if (post.commentsCount > 0) {
+                        Text(
+                            text = "${post.commentsCount}",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .offset(x = (-4).dp, y = 4.dp)
+                                .background(Color.White, shape = RoundedCornerShape(8.dp))
+                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                        )
+                    }
                 }
-                Text(
-                    text = "${post.commentsCount}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
             }
         }
     }

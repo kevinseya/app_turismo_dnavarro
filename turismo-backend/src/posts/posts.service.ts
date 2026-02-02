@@ -38,7 +38,32 @@ export class PostsService {
     });
   }
 
-  delete(id: number) {
+  findByUser(userId: number) {
+    return this.prisma.post.findMany({
+      where: { userId, isActive: true },
+      include: {
+        comments: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+  }
+
+  async delete(id: number, userId: number) {
+    // Obtener el post
+    const post = await this.prisma.post.findUnique({ where: { id } });
+    if (!post) throw new Error('Post not found');
+    // Permitir solo si es dueño o admin
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const isAdmin = user?.role === 'ADMIN';
+    if (post.userId !== userId && !isAdmin) {
+      throw new Error('No autorizado para borrar este post');
+    }
     return this.prisma.post.update({
       where: { id },
       data: { isActive: false },

@@ -11,7 +11,13 @@ import kotlinx.coroutines.launch
 
 class LoginViewModel : ViewModel() {
 
-    fun login(email: String, pass: String, context: Context, onSuccess: (LoginResponse) -> Unit) {
+    fun login(
+        email: String,
+        pass: String,
+        context: Context,
+        onSuccess: (LoginResponse) -> Unit,
+        onError: (String?) -> Unit = {}
+    ) {
         viewModelScope.launch {
             try {
                 val response = Api.retrofitService.login(mapOf("email" to email, "password" to pass))
@@ -19,7 +25,7 @@ class LoginViewModel : ViewModel() {
                 onSuccess(response)
             } catch (t: Throwable) {
                 Log.e("LoginViewModel", "Login failed", t)
-                // Handle error
+                onError(t.message)
             }
         }
     }

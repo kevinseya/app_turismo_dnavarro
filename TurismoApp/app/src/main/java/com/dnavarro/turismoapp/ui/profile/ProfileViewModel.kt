@@ -10,25 +10,50 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class ProfileViewModel : ViewModel() {
 
+class ProfileViewModel : ViewModel() {
     private val _user = MutableStateFlow<User?>(null)
     val user: StateFlow<User?> = _user
 
     private val _posts = MutableStateFlow<List<Post>>(emptyList())
     val posts: StateFlow<List<Post>> = _posts
 
-    fun getMyProfile(token: String, userId: String) {
+    private val _isFollowing = MutableStateFlow<Boolean?>(null)
+    val isFollowing: StateFlow<Boolean?> = _isFollowing
+
+    fun getProfile(token: String, userId: String, currentUserId: String) {
         viewModelScope.launch {
             try {
-                // This is a temporary solution. A dedicated endpoint would be better.
-                val allPosts = Api.retrofitService.getPosts("Bearer $token")
-                val userPosts = allPosts.filter { it.userId.toString() == userId }
+                val userProfile = Api.retrofitService.getUserProfile("Bearer $token", userId)
+                _user.value = userProfile
+                val userPosts = Api.retrofitService.getPostsByUser("Bearer $token", userId)
                 _posts.value = userPosts
-                _user.value = userPosts.firstOrNull()?.user
-
+                // Si el perfil no es el propio, revisa si lo sigues
+                _isFollowing.value = if (userId == currentUserId) null else userProfile.isFollowing == true
             } catch (t: Throwable) {
                 Log.e("ProfileViewModel", "Failed to get profile", t)
+            }
+        }
+    }
+
+    fun followUser(token: String, userId: String, currentUserId: String) {
+        viewModelScope.launch {
+            try {
+                Api.retrofitService.followUser("Bearer $token", userId)
+                getProfile(token, userId, currentUserId)
+            } catch (t: Throwable) {
+                Log.e("ProfileViewModel", "Failed to follow user", t)
+            }
+        }
+    }
+
+    fun unfollowUser(token: String, userId: String, currentUserId: String) {
+        viewModelScope.launch {
+            try {
+                Api.retrofitService.unfollowUser("Bearer $token", userId)
+                getProfile(token, userId, currentUserId)
+            } catch (t: Throwable) {
+                Log.e("ProfileViewModel", "Failed to unfollow user", t)
             }
         }
     }
@@ -37,7 +62,7 @@ class ProfileViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 Api.retrofitService.deletePost("Bearer $token", postId)
-                getMyProfile(token, userId) // Refresh the list
+                getProfile(token, userId, userId) // Refresh the list
             } catch (t: Throwable) {
                 Log.e("ProfileViewModel", "Failed to delete post", t)
             }

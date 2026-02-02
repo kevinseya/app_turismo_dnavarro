@@ -43,6 +43,8 @@ fun CommentsScreen(navController: NavController, commentsViewModel: CommentsView
     val comments by commentsViewModel.comments.collectAsState()
     val isLoading = comments.isEmpty()
     val snackbarHostState = remember { androidx.compose.material3.SnackbarHostState() }
+    // Obtener HomeViewModel para actualizar el contador de comentarios
+    val homeViewModel: HomeViewModel = viewModel()
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -85,7 +87,10 @@ fun CommentsScreen(navController: NavController, commentsViewModel: CommentsView
                 Spacer(modifier = Modifier.width(8.dp))
                 IconButton(onClick = {
                     scope.launch {
-                        commentsViewModel.createComment(token, postId, newComment)
+                        commentsViewModel.createComment(token, postId, newComment) {
+                            // Actualizar contador de comentarios en el feed
+                            homeViewModel.incrementCommentsCount(postId.toIntOrNull())
+                        }
                         newComment = ""
                         snackbarHostState.showSnackbar("¡Comentario enviado!")
                     }

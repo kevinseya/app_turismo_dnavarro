@@ -27,13 +27,29 @@ import com.dnavarro.turismoapp.ui.theme.Orange
 fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var snackbarMessage by remember { mutableStateOf<String?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+
+    // Mostrar Snackbar si hay mensaje
+    LaunchedEffect(snackbarMessage) {
+        snackbarMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            snackbarMessage = null
+        }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBlue)
     ) {
+        // SnackbarHost
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -86,17 +102,43 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel) {
             Spacer(modifier = Modifier.height(32.dp))
             Button(
                 onClick = {
-                    loginViewModel.login(email, password, context, onSuccess = { loginResponse ->
-                        val user = loginResponse.user
-                        val token = loginResponse.token
-                        if (user != null && token != null) {
-                            if (user.role == "ADMIN") {
-                                navController.navigate("adminDashboard/$token")
-                            } else {
-                                navController.navigate("postList/$token/${user.id}")
-                            }
+                    // Validaciones
+                    val emailPattern = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$")
+                    when {
+                        email.isBlank() || password.isBlank() -> {
+                            snackbarMessage = "Por favor, completa todos los campos."
                         }
-                    })
+                        !emailPattern.matches(email) -> {
+                            snackbarMessage = "Ingresa un email válido."
+                        }
+                        else -> {
+                            isLoading = true
+                            loginViewModel.login(email, password, context, onSuccess = { loginResponse ->
+                                isLoading = false
+                                val user = loginResponse.user
+                                val token = loginResponse.token
+                                if (user != null && token != null) {
+                                    snackbarMessage = "¡Inicio de sesión exitoso!"
+                                    if (user.role == "ADMIN") {
+                                        navController.navigate("adminDashboard/$token") {
+                                            popUpTo("login") { inclusive = true }
+                                            launchSingleTop = true
+                                        }
+                                    } else {
+                                        navController.navigate("postList/$token/${user.id}") {
+                                            popUpTo("login") { inclusive = true }
+                                            launchSingleTop = true
+                                        }
+                                    }
+                                } else {
+                                    snackbarMessage = loginResponse.message ?: "Credenciales incorrectas."
+                                }
+                            }, onError = { errorMsg ->
+                                isLoading = false
+                                snackbarMessage = errorMsg ?: "Error al iniciar sesión."
+                            })
+                        }
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -104,10 +146,14 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel) {
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Orange)
             ) {
-                Text(
-                    text = "Iniciar Sesión",
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
-                )
+                if (isLoading) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                } else {
+                    Text(
+                        text = "Iniciar Sesión",
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(16.dp))
             ClickableText(

@@ -18,6 +18,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddLocation
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.LocationOn
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.compose.ui.res.stringResource
+import androidx.core.content.ContextCompat
+import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -44,6 +51,46 @@ fun CreatePostScreen(navController: NavController, createPostViewModel: CreatePo
     val selectedImageUris by createPostViewModel.selectedImageUris.collectAsState()
     val context = LocalContext.current
 
+    // Permisos
+    var showPermissionDialog by remember { mutableStateOf(false) }
+    var permissionDialogMessage by remember { mutableStateOf("") }
+
+    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+        onResult = { success ->
+            if (success && tempCameraUri != null) {
+                createPostViewModel.onImageSelected(tempCameraUri!!)
+            }
+        }
+    )
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickMultipleVisualMedia(),
+        onResult = { uris ->
+            uris?.forEach { createPostViewModel.onImageSelected(it) }
+        }
+    )
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) {
+            val uri = ComposeFileProvider.getImageUri(context)
+            tempCameraUri = uri
+            cameraLauncher.launch(uri)
+        } else {
+            permissionDialogMessage = "Se requiere permiso de cámara para tomar fotos."
+            showPermissionDialog = true
+        }
+    }
+    val locationPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) {
+            navController.navigate("mapScreen")
+        } else {
+            permissionDialogMessage = "Se requiere permiso de ubicación para seleccionar la ubicación."
+            showPermissionDialog = true
+        }
+    }
+
     var showDialog by remember { mutableStateOf(false) }
     var dialogMessage by remember { mutableStateOf("") }
 
@@ -59,25 +106,20 @@ fun CreatePostScreen(navController: NavController, createPostViewModel: CreatePo
             }
         )
     }
-
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture(),
-        onResult = { success ->
-            // Si la cámara devuelve una imagen, agregarla
-            if (success) {
-                // ComposeFileProvider.getImageUri(context) se usó para lanzar
-                // pero no se almacena, así que no se puede recuperar aquí
-                // Mejor usar un callback para obtener el uri antes
+    if (showPermissionDialog) {
+        AlertDialog(
+            onDismissRequest = { showPermissionDialog = false },
+            title = { Text("Permiso requerido") },
+            text = { Text(permissionDialogMessage) },
+            confirmButton = {
+                Button(onClick = { showPermissionDialog = false }) {
+                    Text("Aceptar")
+                }
             }
-        }
-    )
+        )
+    }
 
-    val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(),
-        onResult = { uris ->
-            uris?.forEach { createPostViewModel.onImageSelected(it) }
-        }
-    )
+
 
     Scaffold(
         topBar = {
@@ -173,36 +215,49 @@ fun CreatePostScreen(navController: NavController, createPostViewModel: CreatePo
             }
             Spacer(modifier = Modifier.height(16.dp))
 
-            Row {
-                Button(
+
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                IconButton(
                     onClick = {
-                        // Selección múltiple de galería
-                        galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                    }
+                        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                            val uri = ComposeFileProvider.getImageUri(context)
+                            tempCameraUri = uri
+                            cameraLauncher.launch(uri)
+                        } else {
+                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                        }
+                    },
+                    modifier = Modifier.size(64.dp)
                 ) {
-                    Icon(Icons.Default.Image, contentDescription = "Seleccionar imágenes")
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Elegir imágenes")
+                    Icon(Icons.Filled.PhotoCamera, contentDescription = "Tomar foto", modifier = Modifier.size(48.dp))
+                }
+                IconButton(
+                    onClick = {
+                        galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    },
+                    modifier = Modifier.size(64.dp)
+                ) {
+                    Icon(Icons.Default.Image, contentDescription = "Seleccionar imágenes", modifier = Modifier.size(48.dp))
+                }
+                IconButton(
+                    onClick = {
+                        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                            navController.navigate("mapScreen")
+                        } else {
+                            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                        }
+                    },
+                    modifier = Modifier.size(64.dp)
+                ) {
+                    Icon(Icons.Default.AddLocation, contentDescription = if (selectedLocation == null) "Añadir ubicación" else "Ubicación seleccionada", modifier = Modifier.size(48.dp))
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-
-            Row {
-                Button(onClick = { navController.navigate("mapScreen") }) {
-                    Icon(Icons.Default.AddLocation, contentDescription = "Añadir ubicación")
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(if (selectedLocation == null) "Añadir ubicación" else "Ubicación seleccionada")
-                }
-                Spacer(modifier = Modifier.width(16.dp))
-                Button(onClick = {
-                    // Aquí deberías pedir permiso y obtener la ubicación actual
-                    // Por simplicidad, simula una ubicación (ejemplo: LatLng de CDMX)
-                    createPostViewModel.onLocationSelected(com.google.android.gms.maps.model.LatLng(19.4326, -99.1332))
-                }) {
-                    Text("Usar mi ubicación")
-                }
-            }
 
             Spacer(modifier = Modifier.weight(1f))
             Button(
@@ -224,29 +279,15 @@ fun CreatePostScreen(navController: NavController, createPostViewModel: CreatePo
                         showDialog = true
                     } else {
                         createPostViewModel.createPost(token, context) {
+                            // Navegar al feed tras éxito
                             navController.popBackStack()
                         }
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = "Publicar",
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
-                )
+                Text("Publicar")
             }
         }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true)
-@Composable
-fun CreatePostScreenPreview() {
-    TurismoAppTheme {
-        CreatePostScreen(rememberNavController(), viewModel(), "")
     }
 }
