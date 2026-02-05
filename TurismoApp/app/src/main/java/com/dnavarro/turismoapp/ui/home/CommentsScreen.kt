@@ -35,14 +35,15 @@ fun CommentsScreen(navController: NavController, commentsViewModel: CommentsView
     var newComment by rememberSaveable { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     
+    val comments by commentsViewModel.comments.collectAsState()
+    val isLoading by commentsViewModel.isLoading.collectAsState()
+    val snackbarHostState = remember { androidx.compose.material3.SnackbarHostState() }
+    
     LaunchedEffect(postId) {
         if (token.isNotEmpty()) {
             commentsViewModel.getComments(token, postId)
         }
     }
-    val comments by commentsViewModel.comments.collectAsState()
-    val isLoading = comments.isEmpty()
-    val snackbarHostState = remember { androidx.compose.material3.SnackbarHostState() }
     // Obtener HomeViewModel para actualizar el contador de comentarios
     val homeViewModel: HomeViewModel = viewModel()
 
@@ -66,6 +67,21 @@ fun CommentsScreen(navController: NavController, commentsViewModel: CommentsView
             LazyColumn(modifier = Modifier.weight(1f), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (isLoading) {
                     items(4) { ShimmerCommentItem() }
+                } else if (comments.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No hay comentarios aún. ¡Sé el primero en comentar!",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 } else {
                     items(comments) { comment ->
                         CommentItem(comment = comment)

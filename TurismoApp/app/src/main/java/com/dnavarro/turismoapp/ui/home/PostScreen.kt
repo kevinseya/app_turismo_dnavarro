@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -15,6 +16,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -86,15 +88,14 @@ fun PostScreen(modifier: Modifier = Modifier, homeViewModel: HomeViewModel, toke
                     homeViewModel.likePost(token, it.id)
                 }
             },
-            onCommentClick = { navController.navigate("comments/$token/${it.id}") },
+            onCommentClick = { post ->
+                val currentUserId = com.dnavarro.turismoapp.data.SessionManager.getUserIdFromToken(token) ?: ""
+                navController.navigate("postDetail/${post.id}/$token/$currentUserId")
+            },
             onUserClick = { post ->
                 val authorId = post.user?.id
                 if (authorId != null) {
-                    if (authorId.toString() == userId) {
-                        navController.navigate("profile/$token/$userId")
-                    } else {
-                        // Aquí puedes decidir qué hacer si el usuario no es el usuario actual
-                    }
+                    navController.navigate("profile/$token/$authorId")
                 }
             }
         )
@@ -141,6 +142,28 @@ fun PostItem(
                         .clickable { onUserClick(post) },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    val profileImageUrl = if (it.profileImage != null) {
+                        com.dnavarro.turismoapp.network.BASE_IMAGE_URL + it.profileImage
+                    } else {
+                        "https://ui-avatars.com/api/?name=${it.name.replace(" ", "+")}"
+                    }
+                    
+                    val context = androidx.compose.ui.platform.LocalContext.current
+                    val imageRequest = coil.request.ImageRequest.Builder(context)
+                        .data(profileImageUrl)
+                        .memoryCachePolicy(coil.request.CachePolicy.DISABLED)
+                        .diskCachePolicy(coil.request.CachePolicy.DISABLED)
+                        .build()
+                    
+                    AsyncImage(
+                        model = imageRequest,
+                        contentDescription = "Foto de perfil",
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(androidx.compose.foundation.shape.CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = it.name,
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
@@ -154,7 +177,8 @@ fun PostItem(
                 contentDescription = "Imagen de la publicación: ${post.title}",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(220.dp),
+                    .height(220.dp)
+                    .clickable { onCommentClick(post) },
                 contentScale = ContentScale.Crop
             )
 

@@ -2,6 +2,7 @@ package com.dnavarro.turismoapp.ui.admin
 
 import com.valentinilk.shimmer.shimmer
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.shadow
@@ -65,7 +66,7 @@ fun PostManagementScreen(navController: NavController, adminViewModel: AdminView
                 items(5) { ShimmerPostItem() }
             } else {
                 items(posts) { post ->
-                    PostItem(post = post, adminViewModel = adminViewModel, token = token, snackbarHostState = snackbarHostState)
+                    PostItem(post = post, adminViewModel = adminViewModel, token = token, snackbarHostState = snackbarHostState, navController = navController)
                 }
             }
         }
@@ -73,7 +74,7 @@ fun PostManagementScreen(navController: NavController, adminViewModel: AdminView
 }
 
 @Composable
-fun PostItem(post: Post, adminViewModel: AdminViewModel, token: String, snackbarHostState: SnackbarHostState) {
+fun PostItem(post: Post, adminViewModel: AdminViewModel, token: String, snackbarHostState: SnackbarHostState, navController: NavController) {
     var deleteAnim by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val scale by animateFloatAsState(
@@ -84,7 +85,13 @@ fun PostItem(post: Post, adminViewModel: AdminViewModel, token: String, snackbar
         modifier = Modifier
             .fillMaxWidth()
             .shadow(8.dp, RoundedCornerShape(16.dp))
-            .graphicsLayer(scaleX = scale, scaleY = scale),
+            .graphicsLayer(scaleX = scale, scaleY = scale)
+            .clip(RoundedCornerShape(16.dp))
+            .clickable {
+                // Navegar al detalle del post para ver y borrar comentarios
+                val userId = com.dnavarro.turismoapp.data.SessionManager.getUserIdFromToken(token) ?: ""
+                navController.navigate("postDetail/${post.id}/$token/$userId")
+            },
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {

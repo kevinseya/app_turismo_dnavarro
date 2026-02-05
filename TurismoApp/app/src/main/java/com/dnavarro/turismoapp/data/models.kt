@@ -12,7 +12,10 @@ data class User(
     val email: String,
     val role: String = "",
     val isActive: Boolean? = null,
-    val isFollowing: Boolean? = null
+    val isFollowing: Boolean? = null,
+    val profileImage: String? = null,
+    val followersCount: Int? = null,
+    val followingCount: Int? = null
 )
 
 @Serializable
@@ -65,6 +68,9 @@ data class Notification(
     val title: String,
     val message: String,
     val userId: Int,
+    val type: String? = null,
+    val postId: Int? = null,
+    val commentId: Int? = null,
     val createdAt: String
 )
 
