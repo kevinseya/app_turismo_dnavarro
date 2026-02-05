@@ -48,6 +48,16 @@ interface ApiService {
     @GET("users/{id}")
     suspend fun getUserProfile(@Header("Authorization") token: String, @Path("id") userId: String): User
 
+    @PUT("users/profile")
+    suspend fun updateProfile(@Header("Authorization") token: String, @Body profile: Map<String, String>): User
+
+    @Multipart
+    @PUT("users/profile/image")
+    suspend fun uploadProfileImage(
+        @Header("Authorization") token: String,
+        @Part image: MultipartBody.Part
+    ): User
+
     @POST("users/follow/{id}")
     suspend fun followUser(@Header("Authorization") token: String, @Path("id") userId: String)
 
@@ -71,6 +81,9 @@ interface ApiService {
     @GET("posts")
     suspend fun getPosts(@Header("Authorization") token: String): List<Post>
 
+    @GET("posts/{id}")
+    suspend fun getPostById(@Header("Authorization") token: String, @Path("id") postId: String): Post
+
     @DELETE("posts/{id}")
     suspend fun deletePost(@Header("Authorization") token: String, @Path("id") postId: String)
 
@@ -91,6 +104,13 @@ interface ApiService {
 
     @GET("posts/{postId}/comments")
     suspend fun getComments(@Header("Authorization") token: String, @Path("postId") postId: String): List<Comment>
+
+    @DELETE("posts/{postId}/comments/{commentId}")
+    suspend fun deleteComment(
+        @Header("Authorization") token: String,
+        @Path("postId") postId: String,
+        @Path("commentId") commentId: String
+    )
 
     // Feed
     @GET("feed")

@@ -15,12 +15,18 @@ class CommentsViewModel : ViewModel() {
     private val _comments = MutableStateFlow<List<Comment>>(emptyList())
     val comments: StateFlow<List<Comment>> = _comments
 
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
     fun getComments(token: String, postId: String) {
         viewModelScope.launch {
             try {
+                _isLoading.value = true
                 _comments.value = Api.retrofitService.getComments("Bearer $token", postId)
             } catch (t: Throwable) {
                 Log.e("CommentsViewModel", "Failed to get comments", t)
+            } finally {
+                _isLoading.value = false
             }
         }
     }

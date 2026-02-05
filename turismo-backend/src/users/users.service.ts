@@ -27,6 +27,7 @@ export class UsersService {
 				email: true,
 				role: true,
 				isActive: true,
+				profileImage: true,
 				createdAt: true,
 			},
 		});
@@ -59,6 +60,58 @@ export class UsersService {
 		return this.prisma.user.update({
 			where: { id },
 			data: { role: validRole as $Enums.Role },
+		});
+	}
+
+	updateProfile(id: number, data: { name?: string; profileImage?: string }) {
+		return this.prisma.user.update({
+			where: { id },
+			data,
+			select: {
+				id: true,
+				name: true,
+				email: true,
+				role: true,
+				isActive: true,
+				profileImage: true,
+				createdAt: true,
+			},
+		});
+	}
+
+	async followUser(followerId: number, followingId: number) {
+		if (followerId === followingId) {
+			throw new Error('No puedes seguirte a ti mismo');
+		}
+
+		return this.prisma.follow.create({
+			data: {
+				followerId,
+				followingId,
+			},
+		});
+	}
+
+	async unfollowUser(followerId: number, followingId: number) {
+		return this.prisma.follow.delete({
+			where: {
+				followerId_followingId: {
+					followerId,
+					followingId,
+				},
+			},
+		});
+	}
+
+	async getFollowersCount(userId: number) {
+		return this.prisma.follow.count({
+			where: { followingId: userId },
+		});
+	}
+
+	async getFollowingCount(userId: number) {
+		return this.prisma.follow.count({
+			where: { followerId: userId },
 		});
 	}
 }

@@ -65,6 +65,9 @@ fun RegisterScreen(navController: NavController, loginViewModel: LoginViewModel)
                     unfocusedContainerColor = LightGray,
                     disabledContainerColor = LightGray,
                     focusedIndicatorColor = Orange,
+                    focusedTextColor = DarkBlue,
+                    unfocusedTextColor = DarkBlue,
+                    cursorColor = DarkBlue
                 )
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -79,6 +82,9 @@ fun RegisterScreen(navController: NavController, loginViewModel: LoginViewModel)
                     unfocusedContainerColor = LightGray,
                     disabledContainerColor = LightGray,
                     focusedIndicatorColor = Orange,
+                    focusedTextColor = DarkBlue,
+                    unfocusedTextColor = DarkBlue,
+                    cursorColor = DarkBlue
                 )
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -94,6 +100,9 @@ fun RegisterScreen(navController: NavController, loginViewModel: LoginViewModel)
                     unfocusedContainerColor = LightGray,
                     disabledContainerColor = LightGray,
                     focusedIndicatorColor = Orange,
+                    focusedTextColor = DarkBlue,
+                    unfocusedTextColor = DarkBlue,
+                    cursorColor = DarkBlue
                 )
             )
             Spacer(modifier = Modifier.height(32.dp))

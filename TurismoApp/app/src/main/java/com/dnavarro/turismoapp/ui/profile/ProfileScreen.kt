@@ -102,8 +102,13 @@ fun ProfileScreen(navController: NavController, profileViewModel: ProfileViewMod
                     .background(MaterialTheme.colorScheme.primary, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
+                val profileImageUrl = if (u.profileImage != null) {
+                    com.dnavarro.turismoapp.network.BASE_IMAGE_URL + u.profileImage
+                } else {
+                    "https://ui-avatars.com/api/?name=" + u.name.replace(" ", "+")
+                }
                 AsyncImage(
-                    model = "https://ui-avatars.com/api/?name=" + u.name.replace(" ", "+"),
+                    model = profileImageUrl,
                     contentDescription = "Foto de perfil",
                     modifier = Modifier
                         .size(100.dp)
@@ -129,33 +134,47 @@ fun ProfileScreen(navController: NavController, profileViewModel: ProfileViewMod
             ) {
                 AnimatedStat("Posts", posts.size)
                 AnimatedStat("Likes", posts.sumOf { p -> p.likesCount })
-                AnimatedStat("Followers", 0)
+                AnimatedStat("Followers", u.followersCount ?: 0)
             }
             Spacer(modifier = Modifier.height(16.dp))
             if (isOwnProfile) {
-                Button(
-                    onClick = {
-                        com.dnavarro.turismoapp.data.SessionManager.clearSession(context)
-                        navController.navigate("login") {
-                            popUpTo(0) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Cerrar sesión", color = Color.White)
+                    Button(
+                        onClick = { navController.navigate("editProfile/$token/$userId") },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Text("Editar Perfil", color = Color.White)
+                    }
+                    Button(
+                        onClick = {
+                            com.dnavarro.turismoapp.data.SessionManager.clearSession(context)
+                            navController.navigate("login") {
+                                popUpTo(0) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("Cerrar sesión", color = Color.White)
+                    }
                 }
             } else {
                 if (isFollowing == true) {
                     Button(
-                        onClick = { profileViewModel.unfollowUser(token, userId, currentUserId) },
+                        onClick = {
+                            profileViewModel.unfollowUser(token, userId, currentUserId)
+                        },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
                     ) {
                         Text("Dejar de seguir", color = Color.White)
                     }
                 } else {
                     Button(
-                        onClick = { profileViewModel.followUser(token, userId, currentUserId) },
+                        onClick = {
+                            profileViewModel.followUser(token, userId, currentUserId)
+                        },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
                         Text("Seguir", color = Color.White)
@@ -180,7 +199,7 @@ fun ProfileScreen(navController: NavController, profileViewModel: ProfileViewMod
                 } else {
                     MyPostsGrid(posts = posts, onDeleteClick = { postId ->
                         profileViewModel.deletePost(token, postId.toString(), userId)
-                    }, navController = navController)
+                    }, navController = navController, token = token)
                 }
             } else if (!isOwnProfile && isFollowing == false) {
                 Box(
@@ -207,7 +226,7 @@ fun AnimatedStat(label: String, value: Int) {
 }
 
 @Composable
-fun MyPostsGrid(posts: List<Post>, onDeleteClick: (Int) -> Unit, navController: NavController) {
+fun MyPostsGrid(posts: List<Post>, onDeleteClick: (Int) -> Unit, navController: NavController, token: String) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = Modifier.fillMaxSize(),
@@ -215,13 +234,13 @@ fun MyPostsGrid(posts: List<Post>, onDeleteClick: (Int) -> Unit, navController: 
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(posts) { post ->
-            MyPostItem(post = post, onDeleteClick = onDeleteClick, navController = navController)
+            MyPostItem(post = post, onDeleteClick = onDeleteClick, navController = navController, token = token)
         }
     }
 }
 
 @Composable
-fun MyPostItem(post: Post, onDeleteClick: (Int) -> Unit, navController: NavController) {
+fun MyPostItem(post: Post, onDeleteClick: (Int) -> Unit, navController: NavController, token: String) {
     val coroutineScope = rememberCoroutineScope()
     var scale = animateFloatAsState(
         targetValue = 1f,
@@ -242,7 +261,10 @@ fun MyPostItem(post: Post, onDeleteClick: (Int) -> Unit, navController: NavContr
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(RoundedCornerShape(16.dp))
-                    .clickable { navController.navigate("postDetail/${post.id}") },
+                    .clickable {
+                        val userId = com.dnavarro.turismoapp.data.SessionManager.getUserIdFromToken(token) ?: ""
+                        navController.navigate("postDetail/${post.id}/$token/$userId")
+                    },
                 contentScale = ContentScale.Crop
             )
             IconButton(

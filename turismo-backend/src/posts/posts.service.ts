@@ -26,7 +26,11 @@ export class PostsService {
     return this.prisma.post.findMany({
       where: { isActive: true },
       include: {
-        comments: true,
+        comments: {
+          where: { isActive: true },
+          include: { user: true },
+          orderBy: { createdAt: 'desc' }
+        },
         user: {
           select: {
             id: true,
@@ -34,6 +38,29 @@ export class PostsService {
             email: true,
           },
         },
+        likes: true,
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  findOne(id: number) {
+    return this.prisma.post.findUnique({
+      where: { id },
+      include: {
+        comments: {
+          where: { isActive: true },
+          include: { user: true },
+          orderBy: { createdAt: 'desc' }
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        likes: true,
       },
     });
   }
@@ -42,7 +69,11 @@ export class PostsService {
     return this.prisma.post.findMany({
       where: { userId, isActive: true },
       include: {
-        comments: true,
+        comments: {
+          where: { isActive: true },
+          include: { user: true },
+          orderBy: { createdAt: 'desc' }
+        },
         user: {
           select: {
             id: true,
@@ -50,7 +81,9 @@ export class PostsService {
             email: true,
           },
         },
+        likes: true,
       },
+      orderBy: { createdAt: 'desc' }
     });
   }
 

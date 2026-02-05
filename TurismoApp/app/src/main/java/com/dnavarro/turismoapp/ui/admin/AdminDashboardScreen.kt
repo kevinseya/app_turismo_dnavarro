@@ -32,6 +32,8 @@ fun AdminDashboardScreen(
     adminViewModel: AdminViewModel,
     token: String
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    
     LaunchedEffect(token) {
         if (token.isNotEmpty()) {
             adminViewModel.getAdminDashboard(token)
@@ -80,6 +82,22 @@ fun AdminDashboardScreen(
                 icon = Icons.Default.Article,
                 onClick = { navController.navigate("postManagement/$token") }
             )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = {
+                com.dnavarro.turismoapp.data.SessionManager.clearSession(context)
+                navController.navigate("login") {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+            modifier = Modifier.fillMaxWidth(0.5f)
+        ) {
+            Text("Cerrar Sesión", color = Color.White)
         }
     }
 }

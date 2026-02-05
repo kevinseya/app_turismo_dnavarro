@@ -63,38 +63,21 @@ fun SearchUserScreen(navController: NavController, homeViewModel: HomeViewModel,
 
 @Composable
 fun UserSearchItem(user: User, homeViewModel: HomeViewModel, token: String, navController: NavController) {
-    var isFollowing by remember { mutableStateOf(user.isFollowing ?: false) }
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { navController.navigate("profile/$token/${user.id}") },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = user.name,
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable { navController.navigate("profile/$token/${user.id}") }
+                modifier = Modifier.weight(1f)
             )
-            Button(
-                onClick = {
-                    if (isFollowing) {
-                        homeViewModel.unfollowUser(token, user.id)
-                        isFollowing = false
-                    } else {
-                        homeViewModel.followUser(token, user.id)
-                        isFollowing = true
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isFollowing) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Text(if (isFollowing) "Siguiendo" else "Seguir")
-            }
         }
     }
 }

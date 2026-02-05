@@ -135,6 +135,30 @@ class MainActivity : ComponentActivity() {
                             val token = backStackEntry.arguments?.getString("token") ?: ""
                             NotificationsScreen(navController = navController, notificationsViewModel = notificationsViewModel, token = token)
                         }
+                        composable(
+                            "postDetail/{postId}/{token}/{userId}",
+                            arguments = listOf(
+                                navArgument("postId") { type = NavType.StringType },
+                                navArgument("token") { type = NavType.StringType },
+                                navArgument("userId") { type = NavType.StringType }
+                            )
+                        ) { backStackEntry ->
+                            val postId = backStackEntry.arguments?.getString("postId") ?: ""
+                            val token = backStackEntry.arguments?.getString("token") ?: ""
+                            val userId = backStackEntry.arguments?.getString("userId") ?: ""
+                            PostDetailScreen(navController = navController, postId = postId, token = token, userId = userId)
+                        }
+                        composable(
+                            "editProfile/{token}/{userId}",
+                            arguments = listOf(
+                                navArgument("token") { type = NavType.StringType },
+                                navArgument("userId") { type = NavType.StringType }
+                            )
+                        ) { backStackEntry ->
+                            val token = backStackEntry.arguments?.getString("token") ?: ""
+                            val userId = backStackEntry.arguments?.getString("userId") ?: ""
+                            com.dnavarro.turismoapp.ui.profile.EditProfileScreen(navController = navController, token = token, userId = userId)
+                        }
                     }
                 }
             }
