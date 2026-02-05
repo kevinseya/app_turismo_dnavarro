@@ -86,6 +86,12 @@ export class PostsController {
     return this.postsService.findAll();
   }
 
+  // Obtener un post específico por ID
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    return this.postsService.findOne(+id);
+  }
+
   // ❌ BORRADO LOGICO (ADMIN o dueño del post)
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
